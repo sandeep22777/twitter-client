@@ -1,17 +1,25 @@
 import localFont from "next/font/local";
-import { BiHash, BiHomeCircle, BiMoney, BiUser } from "react-icons/bi";
+import {
+  BiHash,
+  BiHomeCircle,
+  BiImageAlt,
+  BiMoney,
+  BiUser,
+} from "react-icons/bi";
 import { BsBell, BsBookmark, BsEnvelope, BsTwitter } from "react-icons/bs";
 
 import FeedCard from "@/components/FeedCards";
 import { SlOptions } from "react-icons/sl";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { graphqlClient } from "@/clients/api";
 import { verifyUserGoogleTokenQuery } from "@/graphql/query/user";
 import { useCurrentUser } from "@/hooks/user";
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
+import { useCreateTweetMutation, useGetAllTweets } from "@/hooks/tweet";
+import { Tweet } from "@/gql/graphql";
 
 // const geistSans = localFont({
 //   src: "./fonts/GeistVF.woff",
@@ -70,7 +78,9 @@ const sideBarMenuItems: TwitterSidebarButtons[] = [
 
 export default function Home() {
   const { user } = useCurrentUser();
-  console.log(user, "tans");
+  const { tweets = [] } = useGetAllTweets();
+
+  const [content, setContent] = useState("");
   const queryClient = useQueryClient();
   const handleLoginWithGoogle = useCallback(
     async (cred: CredentialResponse) => {
@@ -98,6 +108,22 @@ export default function Home() {
 
     []
   );
+
+  const { mutate } = useCreateTweetMutation();
+
+  const handleCreateTweet = useCallback(() => {
+    mutate({
+      content,
+    });
+    setContent("");
+  }, [content, mutate]);
+
+  const handleSelectImage = useCallback(() => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+  }, []);
   return (
     <div>
       <div className="grid grid-cols-12 h-screen w-screen pl-56">
@@ -142,15 +168,45 @@ export default function Home() {
           )}
         </div>
         <div className="col-span-5 border-r-[1px] border-l-[1px] h-screen overflow-scroll no-scrollbar  border-gray-600">
-          <FeedCard />
-          <FeedCard />
-          <FeedCard />
-          <FeedCard />
-          <FeedCard />
-          <FeedCard />
-          <FeedCard />
-          <FeedCard />
-          <FeedCard />
+          <div className="border border-r-0 border-l-0 border-b-0 border-gray-200 p-5 hover:bg-slate-900 transition-all cursor-pointer">
+            <div className="grid grid-cols-12 gap-4">
+              {user?.profileImageUrl && (
+                <div className="col-span-1">
+                  <Image
+                    src={user && user?.profileImageUrl}
+                    alt="profile picture"
+                    width="64"
+                    height="64"
+                    className="rounded-full"
+                  />
+                </div>
+              )}
+              <div className="col-span-11 ">
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full bg-transparent text-2xl px-2 py-4 border-b  border-gray-600"
+                  placeholder="what's happening"
+                  rows={4}
+                ></textarea>
+                <div className="pb-8 flex justify-between items-center mt-2 ">
+                  <BiImageAlt
+                    className="text-2xl hover:bg-blue-600"
+                    onClick={handleSelectImage}
+                  />
+                  <button
+                    onClick={handleCreateTweet}
+                    className=" rounded-full bg-[#1d9bf0] w-fit px-12  py-2 cursor-pointer font-semibold"
+                  >
+                    Tweet
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {tweets?.map((tweet) =>
+            tweet ? <FeedCard key={tweet?.id} data={tweet as Tweet} /> : null
+          )}
         </div>
         <div className="col-span-3 p-5">
           {!user && (
