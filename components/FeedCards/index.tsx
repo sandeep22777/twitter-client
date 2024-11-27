@@ -1,5 +1,6 @@
 import { Tweet } from "@/gql/graphql";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 import { AiOutlineHeart } from "react-icons/ai";
 import { BiMessageRounded, BiUpload } from "react-icons/bi";
@@ -26,9 +27,11 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
           )}
         </div>
         <div className="col-span-11">
-          <h5>
-            {data.author?.firstName} {data.author?.lastName}
-          </h5>
+          {data.author?.id && (
+            <Link href={`/${data.author?.id}`}>
+              {data.author?.firstName} {data.author?.lastName}
+            </Link>
+          )}
           <p>{data.content}</p>
           <div className="flex justify-between text-2xl mt-6 items-center p-2 w-[90%]">
             <div>
